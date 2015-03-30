@@ -25,17 +25,23 @@ func main() {
 	}
 
 	nginx := task.FileServer{
-		Name:        "nginx",
-		Source:      "http://nginx.org/download/",
-		Grep:        "\"(nginx-([1-9]+)\\.([0-9]+)\\.([0-9]+)\\.tar\\.gz)\"",
-		GrepNamePos: 1,
-		GrepVerPos:  []int{2, 3, 4},
-		SortByVer:   true,
+		Name:   "nginx",
+		Source: "http://nginx.org/download/",
 	}
-	if err := nginx.GetLinks(); err != nil {
+
+	if err := nginx.GetContent(); err != nil {
 		log.Println(err)
 	} else {
-		newTask.AddFileServerLinks(nginx)
+		if err := nginx.GetLinks(task.FileServerGetLinksOptions{
+			Grep:        "\"(nginx-([1-9]+)\\.([0-9]+)\\.([0-9]+)\\.tar\\.gz)\"",
+			GrepNamePos: 1,
+			GrepVerPos:  []int{2, 3, 4},
+			SortByVer:   true,
+		}); err != nil {
+			log.Println(err)
+		} else {
+			newTask.AddFileServerLinks(nginx)
+		}
 	}
 
 	newTask.DownloadFiles(5)

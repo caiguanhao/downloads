@@ -13,14 +13,18 @@ import (
 
 type (
 	FileServer struct {
-		Name        string
-		Source      string
+		Name   string
+		Source string
+
+		content string
+		files   []string
+	}
+
+	FileServerGetLinksOptions struct {
 		Grep        string
 		GrepNamePos int
 		GrepVerPos  []int
 		SortByVer   bool
-
-		files []string
 	}
 
 	ByVersion struct {
@@ -48,7 +52,7 @@ func (bv ByVersion) Less(i, j int) bool {
 	return bvi1 < bvj1
 }
 
-func (fs *FileServer) GetLinks() error {
+func (fs *FileServer) GetContent() error {
 	log.Printf("Downloading page from %s\n", fs.Source)
 	resp, err := http.Get(fs.Source)
 	if err != nil {
@@ -59,16 +63,21 @@ func (fs *FileServer) GetLinks() error {
 	if err != nil {
 		return err
 	}
-	re := regexp.MustCompile(fs.Grep)
-	links := re.FindAllStringSubmatch(string(content), -1)
-	if fs.SortByVer {
+	fs.content = string(content)
+	return nil
+}
+
+func (fs *FileServer) GetLinks(options FileServerGetLinksOptions) error {
+	re := regexp.MustCompile(options.Grep)
+	links := re.FindAllStringSubmatch(fs.content, -1)
+	if options.SortByVer {
 		sort.Sort(ByVersion{
 			Ver:    links,
-			VerPos: fs.GrepVerPos,
+			VerPos: options.GrepVerPos,
 		})
 	}
 	for _, link := range links {
-		fs.files = append(fs.files, joinPath(fs.Source, link[fs.GrepNamePos]))
+		fs.files = append(fs.files, joinPath(fs.Source, link[options.GrepNamePos]))
 	}
 	log.Printf("Found %d files.\n", len(fs.files))
 	return nil
