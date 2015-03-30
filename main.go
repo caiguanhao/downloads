@@ -22,6 +22,21 @@ func main() {
 	} else {
 		newTask.AddGitHubSources(github)
 		newTask.AddGitHubReleases(github)
-		newTask.DownloadFiles(5)
 	}
+
+	nginx := task.FileServer{
+		Name:        "nginx",
+		Source:      "http://nginx.org/download/",
+		Grep:        "\"(nginx-([1-9]+)\\.([0-9]+)\\.([0-9]+)\\.tar\\.gz)\"",
+		GrepNamePos: 1,
+		GrepVerPos:  []int{2, 3, 4},
+		SortByVer:   true,
+	}
+	if err := nginx.GetLinks(); err != nil {
+		log.Println(err)
+	} else {
+		newTask.AddFileServerLinks(nginx)
+	}
+
+	newTask.DownloadFiles(5)
 }
